@@ -1,0 +1,26 @@
+{
+    "测试测试": {
+        "prefix": "测试测试",
+        "scope": "javascript,typescript,javascriptreact,plaintext",
+        "body": [
+            "// 默认最新的next版本,想要指定特定next版本,通过'@alife/next@0.1.61'的方式指定",
+            "// 范例如下，可以去掉注释查看效果",
+            "import { Button } from '@alife/next';",
+            "ReactDOM.render(<Button type=\"primary\">按钮</Button>, mountNode);",
+            ""
+        ],
+        "description": "测试测试"
+    },
+    "x'xxoo": {
+        "prefix": "x'xxoo",
+        "scope": "javascript,typescript,javascriptreact,plaintext",
+        "body": [
+            "// 默认最新的next版本,想要指定特定next版本,通过'@alife/next@0.1.61'的方式指定",
+            "// 范例如下，可以去掉注释查看效果",
+            "import { Button } from '@alife/next';",
+            "ReactDOM.render(<Button type=\"primary\">按钮</Button>, mountNode);",
+            ""
+        ],
+        "description": "x'xxoo"
+    }
+}

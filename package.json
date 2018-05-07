@@ -1,0 +1,106 @@
+{
+  "name": "snipx",
+  "displayName": "snipx",
+  "description": "snippets",
+  "version": "0.1.0",
+  "publisher": "snipx",
+  "engines": {
+    "vscode": "^1.23.0"
+  },
+  "icon": "images/icon.png",
+  "categories": [
+    "Other",
+    "Snippets"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./out/extension",
+  "contributes": {
+    "commands": [
+      {
+        "command": "snipx.update",
+        "title": "更新snipx代码片段"
+      },
+      {
+        "command": "snipx.map",
+        "title": "snipx Snippets Map查看"
+      },
+      {
+        "command": "snipx.config",
+        "title": "配置snipx源"
+      }
+    ],
+    "snippets": [
+      {
+        "languages": [
+          "javascript",
+          "typescript",
+          "javascriptreact",
+          "scss",
+          "css",
+          "less"
+        ],
+        "path": "./snippets/_riddle.code-snippets"
+      },
+      {
+        "languages": [
+          "javascript",
+          "typescript",
+          "javascriptreact",
+          "scss",
+          "css",
+          "less"
+        ],
+        "path": "./snippets/_gitlab.code-snippets"
+      }
+    ],
+    "configuration": {
+      "title": "Snipx Config",
+      "properties": {
+        "snipx.settings.gitlabSource": {
+          "type": "array",
+          "default": [
+            "http://gitlab.alibaba-inc.com/fd-arts/core-base"
+          ],
+          "description": "获取Gitlab Snippets的地址"
+        },
+        "snipx.settings.riddleTags": {
+          "type": "array",
+          "default": [
+            "FdArts+代码库"
+          ],
+          "description": "Riddle 标签数组"
+        },
+        "snipx.settings.gitlabApiUrl": {
+          "type": "string",
+          "default": "",
+          "description": "gitlab的api地址配置"
+        },
+        "snipx.settings.gitlabPrivateToken": {
+          "type": "string",
+          "default": "",
+          "description": "gitlab的密钥"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "postinstall": "node ./node_modules/vscode/bin/install",
+    "test": "npm run compile && node ./node_modules/vscode/bin/test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^2.2.42",
+    "@types/node": "^8.10.12",
+    "@types/node-fetch": "^1.6.9",
+    "git-url-parse": "^9.0.0",
+    "node-fetch": "^2.1.2",
+    "tslint": "^5.8.0",
+    "typescript": "^2.6.1",
+    "vscode": "^1.1.17"
+  },
+  "dependencies": {}
+}
