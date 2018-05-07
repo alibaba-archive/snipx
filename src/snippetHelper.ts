@@ -10,12 +10,25 @@ interface CodeObject {
     [key: string]: VscodeSnippetItem;
 }
 
-const path = require('path');
-const fs = require('fs');
+import * as fs from 'fs';
+import * as path from 'path';
 import { window, ViewColumn } from 'vscode';
 import { RIDDLE, GITLAB, GITHUB } from './static';
 
 const supportSyntax:string[] = ['javascript','typescript','javascriptreact','plaintext'];
+
+function escape(s: string) {
+    return s.replace(/[&"<>]|[\s]/g, function (c: any) {
+        const escmap: { [key: string]: string } = {
+            '&': '&amp;',
+            '"': '&quot;',
+            '<': '&lt;',
+            '>': '&gt;'
+        };
+
+        return escmap[c] || '&nbsp;';
+    });
+}
 
 export default class SnippetsHelper {
     public static generateFromGitlabSnippets(gitlabSnippets: Array<any>) {
@@ -111,10 +124,15 @@ export default class SnippetsHelper {
         const tableHTMLArray = tableList.map((tableSnipList, index) => {
             const snipListHTMLArray = tableSnipList.map((tableSnipItem) => {
                 const { prefix, title, body } = tableSnipItem;
+                const partBodyArr = body.slice(0, 10).map(escape);
+                const partBody = partBodyArr.join('<br />');
+
+                const pureTitle = title ? title.split('/')[0] : '';
+
                 return `<tr>
                     <td>${prefix}</td>
-                    <td>${title}</td>
-                    <td>${body[0]}</td>
+                    <td>${pureTitle}</td>
+                    <td>${partBody}</td>
                 </tr>`
             });
 

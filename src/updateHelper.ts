@@ -1,11 +1,12 @@
-import ConfigHelper from './configHelper';
+import { ConfigHelper } from './configHelper';
 import * as fs from 'fs';
 import * as path from 'path';
 import FetchHelper from './fetchHelper';
 import SnippetsHelper from './snippetHelper';
 import { window, commands, ProgressLocation } from 'vscode';
+import { RIDDLE, GITLAB, GITHUB } from './static';
 
-export default class UpdateHelper {
+export class UpdateHelper {
     private static runProgress(title:string, task: Promise<any>) {
         window.withProgress({
 			location: ProgressLocation.Notification,
@@ -79,5 +80,57 @@ export default class UpdateHelper {
         });
 
         UpdateHelper.runProgress('riddle', p);
+    }
+
+    private static updateGithub() {
+        
+    }
+
+    public static async update () {
+        const codeSource = await window.showQuickPick([
+            { label: 'Riddle 仓库', value: RIDDLE },
+            { label: 'Gitlab Snippets', value: GITLAB }],
+        { placeHolder: '选择需要更新的片段源' });
+        
+        if (codeSource && codeSource.value) {            
+            switch (codeSource.value) {
+                case RIDDLE: UpdateHelper.updateRiddle(); break;
+                // case GITLAB: UpdateHelper.updateGitlab(); break;
+                case GITHUB: UpdateHelper.updateGithub(); break;
+            }
+        }
+    }
+
+    public static async config() {
+        const codeSource = await window.showQuickPick([
+            { label: 'Riddle 仓库', value: RIDDLE },
+            { label: 'Gitlab Snippets', value: GITLAB }],
+        { placeHolder: '选择片段源' });
+        
+        if (codeSource && codeSource.value) {            
+            switch (codeSource.value) {
+                case RIDDLE: UpdateHelper.completeRiddleConfig(); break;
+                case GITLAB: UpdateHelper.completeGitlabConfig(); break;
+                case GITHUB: UpdateHelper.completeGithubConfig(); break;
+            }
+        }
+    }
+
+    private static async completeRiddleConfig () {
+        const rawTags = await window.showInputBox({ value: 'FdArts+代码库', prompt: '请输入需要拉取的标签名, 多个标签用 , 隔开' });
+        
+        if (rawTags) {
+            let tags = rawTags.split(',');
+            await ConfigHelper.setRiddleTags(tags);
+            UpdateHelper.updateRiddle();
+        }
+    }
+
+    private static async completeGitlabConfig () {
+
+    }
+
+    private static async completeGithubConfig () {
+        
     }
 }

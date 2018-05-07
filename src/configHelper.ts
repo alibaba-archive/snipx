@@ -1,8 +1,6 @@
-import { window, workspace } from 'vscode';
-import { RIDDLE, GITLAB, GITHUB } from './static';
-import UpdateHandler from './updateHelper';
+import { workspace } from 'vscode';
 
-export default class ConfigHelper {
+export class ConfigHelper {
     public static get configuration() {
         return workspace.getConfiguration('snipx.settings');
     }
@@ -29,38 +27,5 @@ export default class ConfigHelper {
 
     public static get gitlabPrivateToken(): string {
         return ConfigHelper.getSettings<string>('gitlabPrivateToken');
-    }
-
-    public static async config() {
-        const codeSource = await window.showQuickPick([
-            { label: 'Riddle 仓库', value: RIDDLE },
-            { label: 'Gitlab Snippets', value: GITLAB }],
-        { placeHolder: '选择片段源' });
-        
-        if (codeSource && codeSource.value) {            
-            switch (codeSource.value) {
-                case RIDDLE: ConfigHelper.completeRiddleConfig(); break;
-                case GITLAB: ConfigHelper.completeGitlabConfig(); break;
-                case GITHUB: ConfigHelper.completeGithubConfig(); break;
-            }
-        }
-    }
-
-    private static async completeRiddleConfig () {
-        const rawTags = await window.showInputBox({ value: 'FdArts+代码库', prompt: '请输入需要拉取的标签名, 多个标签用 , 隔开' });
-        
-        if (rawTags) {
-            let tags = rawTags.split(',');
-            await ConfigHelper.setRiddleTags(tags);
-            UpdateHandler.updateRiddle();
-        }
-    }
-
-    private static async completeGitlabConfig () {
-
-    }
-
-    private static async completeGithubConfig () {
-        
-    }
+    }    
 }

@@ -2,7 +2,7 @@
 
 import { window } from 'vscode';
 import { URLSearchParams } from 'url';
-import ConfigHelper from './configHelper';
+import { ConfigHelper } from './configHelper';
 const gitUrlParse = require('git-url-parse');
 import fetch from 'node-fetch';
 import { SnipItem } from './static';
@@ -111,7 +111,6 @@ export default class FetchHelper {
                 
                     resolveTag(Promise.all(promiseList));
                 } else {
-                    // window.showInformationMessage('拉取riddle代码片段失败，请检查是否在公司内网环境!');
                     rootOnError && rootOnError('拉取riddle代码片段失败，请检查是否在公司内网环境!');
                     reject(Promise.resolve(null));
                 }
@@ -121,10 +120,7 @@ export default class FetchHelper {
         return Promise.all(riddleList);
     }
 
-    private async gitlabRequest (api: string, body: any) {
-        // const ACCOUNT = 'saga.robot'
-        // const PRIVATE_TOKEN = 'JzFQzvP7i7WPu_qb_pcL'
-        // const API_URL = 'http://gitlab.alibaba-inc.com/api/v3/';
+    private async gitlabRequest (api: string, body: any) {        
         const PRIVATE_TOKEN = ConfigHelper.gitlabPrivateToken;
         const API_URL = ConfigHelper.gitlabApiUrl;
 
