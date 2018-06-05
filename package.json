@@ -28,8 +28,53 @@
             {
                 "command": "extension.snipx.config",
                 "title": "配置snipx源"
+            },
+            {
+                "command": "extension.snipx.seed",
+                "title": "snipx种子导入"
+            },
+            {
+                "command": "extension.snipx.egg",
+                "title": "egg路由导入"
             }
         ],
+        "viewsContainers": {
+			"activitybar": [
+				{
+					"id": "package-explorer",
+					"title": "Package Explorer",
+					"icon": "media/dep.svg"
+				}
+			]
+		},
+		"views": {
+			"package-explorer": [
+				{
+					"id": "nodeDependencies",
+					"name": "Node Dependencies"
+				}
+			]
+		},
+        "menus": {
+            "explorer/context": [{
+                "command": "extension.snipx.seed"
+            },
+            {
+                "command": "extension.snipx.egg"
+            }],
+            "editor/title": [{
+                "when": "resourceLangId == markdown",
+                "command": "markdown.showPreview",
+                "alt": "markdown.showPreviewToSide",
+                "group": "navigation"
+            }],
+            "view/title": [{
+                "command": "extension.snipx.map"
+            }],
+            "view/item/context": [{
+                "command": "extension.snipx.config"
+            }]
+        },
         "snippets": [
             {
                 "languages": [
