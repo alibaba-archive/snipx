@@ -1,19 +1,16 @@
 interface VscodeSnippetItem {
-    prefix: string,
-    scope: string,
-    body: Array<string>,
-    description: string,
-    title?: string
-}
-
-interface CodeObject {
-    [key: string]: VscodeSnippetItem;
+    prefix: string;
+    scope: string;
+    body: Array<string>;
+    description: string;
+    title?: string;
 }
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { window, ViewColumn } from 'vscode';
-import { RIDDLE, GITLAB, GITHUB } from './static';
+import { window, ViewColumn, ExtensionContext } from 'vscode';
+import { GITHUB } from './static';
+import { UpdateHelper } from './updateHelper';
 
 const supportSyntax:string[] = ['javascript','typescript','javascriptreact','plaintext'];
 
@@ -31,43 +28,42 @@ function escape(s: string) {
 }
 
 export default class SnippetsHelper {
-    public static generateFromGitlabSnippets(gitlabSnippets: Array<any>) {
-        let comboSnippets: CodeObject = {};
-        gitlabSnippets.forEach((item) => {
-            const { title, keyword } = item;
-            let smarKey = title || keyword;
-            smarKey = smarKey.replace(/\.(\w*)$/, '');
-
-            let injectKey:string = !(smarKey in comboSnippets) ? smarKey : `_${smarKey}`;
-            comboSnippets[injectKey] = this.generateVscodeConfigItem(item);
-        });
-
-        return comboSnippets;
-    }
-
-    public static generateFromRiddleSnippets(riddleSnippets: Array<any>) {
-        let comboSnippets: CodeObject = {};
-        riddleSnippets.forEach((item) => {
-            try {
-                const { title, keyword } = item;
-                let smarKey = title || keyword;
-
-                if (smarKey && typeof smarKey === 'string') {
-                    smarKey = smarKey.replace(/\.(\w*)$/, '');
-                    let injectKey:string = !(smarKey in comboSnippets) ? smarKey : `_${smarKey}`;
-                    comboSnippets[injectKey] = this.generateVscodeConfigItem(item);
-                }                
-            } catch (e) {
-                console.log(e);
+    public static generateFromGistSnippets(userGistList: Array<any>) {
+        let comboSnippets: any = {};
+        const userCodeSnippets: any = {};
+        userGistList.forEach((item) => {
+            const { user, gists: gistList } = item;
+            if (Array.isArray(gistList)) {
+                gistList.forEach((gistItem) => {
+                    const { id = '', snippets } = gistItem;                    
+                    if (!userCodeSnippets[id]) {
+                        userCodeSnippets[id] = {
+                            id,
+                            snippets: [],
+                        };
+                    }
+                    if (Array.isArray(snippets)) {
+                        snippets.forEach((snipItem) => {
+                            const { filename, content } = snipItem;
+                            let extLessName = filename.replace(/\.(\w*)$/, '');
+                            const gvcItem = this.generateVscodeConfigItem({
+                                content,
+                                title: extLessName,
+                            });
+                            userCodeSnippets[id].snippets.push(gvcItem);
+                        });
+                    }
+                });
+                comboSnippets[user] = userCodeSnippets;
             }
         });
 
-        return comboSnippets;
+        return comboSnippets; 
     }
 
     private static generateVscodeConfigItem (item: any) {
         const { title: rawTitle, content } = item;
-		const [ title, smartKey ] = rawTitle.split('/');
+		const [ smartKey, title ] = rawTitle.split('/');
 
 		let scope = supportSyntax.join(',');
 		let commetReg = /\/\*{2}\s?(\[.*\].*)\s?\*{2}\//;
@@ -77,86 +73,130 @@ export default class SnippetsHelper {
 		});
 
 		return {
-			prefix: smartKey || title,
+			prefix: smartKey,
 			scope,
 			body,
-			description: title
+            description: title,
+            title: title || smartKey,
 		};
     }
 
-    public static generateSnippetsMap () {
+    public static transform2core (origin: any) {
+        const result: any = {};
+        Object.keys(origin).forEach((userKey) => {
+            const user = origin[userKey];
+            Object.keys(user).forEach((snipId) => {
+                const snipItem = user[snipId];
+                const { snippets = [] } = snipItem;
+                snippets.forEach((file: any) => {
+                    const { title } = file;
+                    if (!result[title]) {
+                        result[title] = file;
+                    } else {
+                        result[`_${title}`] = file;
+                    }
+                });
+            });
+        });
+        return result;
+    }
+
+    public static generateSnippetsMap (context: ExtensionContext) {
         const panel = window.createWebviewPanel('snippets map', "snippets map", ViewColumn.One, {
             enableScripts: true,
             retainContextWhenHidden: true
         });
 
-
-        // const url = Uri.file(path.join(extensionPath, './src/abc.js'));
-        // // const fileUrl = url.with({ scheme: 'vscode-resource' });
-        // const doc = await workspace.openTextDocument(url); 
-        // window.showTextDocument(doc);
-
         panel.webview.html = SnippetsHelper.generateSnippetsMapHTML();
+        panel.onDidDispose(() => {
+            // 
+        }, null, context.subscriptions);
+        
+        panel.webview.onDidReceiveMessage(async (message) => {
+            const { command, payload } = message;
+            switch (command) {
+                case 'add': 
+                    await UpdateHelper.add();
+                    panel.webview.html = SnippetsHelper.generateSnippetsMapHTML();
+                    break;
+                case 'addUser': 
+                    await UpdateHelper.addUser();
+                    panel.webview.html = SnippetsHelper.generateSnippetsMapHTML();
+                    break;
+                case 'reload': 
+                    await UpdateHelper.reload();
+                    panel.webview.html = SnippetsHelper.generateSnippetsMapHTML();
+                    break;
+                case 'deleteUserById': 
+                    await UpdateHelper.deleteUserById(payload);
+                    panel.webview.html = SnippetsHelper.generateSnippetsMapHTML();
+                    break;
+            }
+        }, undefined, context.subscriptions);
     }
 
-    private static generateSnippetsMapHTML () {
-        let tableList: VscodeSnippetItem[][] = [];
-        const snippetsKeyList = [RIDDLE, GITHUB, GITLAB];
-        snippetsKeyList.forEach((filekey) => {
-            const filePath = path.join(__dirname, `../snippets/_${filekey}.code-snippets`);
-            const fileContent = fs.readFileSync(filePath, 'utf-8');
-            const jsonContent = JSON.parse(fileContent);
+    private static generateSnippetsMapHTML () {        
+        const filePath = path.join(__dirname, `../snippets/_${GITHUB}-map.code-snippets`);
+        const fileContent = fs.readFileSync(filePath, 'utf-8');
+        const jsonContent = JSON.parse(fileContent);
 
-            let snippetList: VscodeSnippetItem[] = [];
-            if (jsonContent) {
-                Object.keys(jsonContent).forEach((snippetKey) => {
-                    const snippetItem: VscodeSnippetItem = jsonContent[snippetKey];
-                    snippetList.push({
-                        ...snippetItem,
-                        title: snippetKey
+        let tableHTML = '';
+        if (jsonContent) {
+            const tableArray = Object.keys(jsonContent).map((userId) => {
+                const userSnipIdMap = jsonContent[userId];
+                const userSnipIdArray = Object.keys(userSnipIdMap).map((snipId) => {
+                    const snipItem = userSnipIdMap[snipId];
+                    const { id, snippets } = snipItem;
+                    const snipListHTMLArray = snippets.map((singleItem: VscodeSnippetItem) => {
+                        const { prefix, title, body } = singleItem;
+                        const partBodyArr = body.slice(0, 10).map(escape);
+                        const partBody = partBodyArr.join('<br />');
+
+                        const pureTitle = title ? title.split('/')[0] : '';
+
+                        return `<tr>
+                            <td>${prefix}</td>
+                            <td>${pureTitle}</td>
+                            <td>${partBody}</td>
+                        </tr>`;
                     });
+
+                    if (snipListHTMLArray.length === 0) {
+                        return '';
+                    }
+                    const snipListHTML = snipListHTMLArray.join('\n');
+                    return `
+                        <h4 style="margin-bottom: 8px;">id: ${id}</h4>
+                        <table border="1" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th align="left">关键字</th>
+                                    <th align="left">标题</th>
+                                    <th align="left">内容</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            ${snipListHTML}
+                            </tbody>
+                        </table>
+                    `;
                 });
-
-                tableList.push(snippetList);
-            }
-        });
-
-        const tableHTMLArray = tableList.map((tableSnipList, index) => {
-            const snipListHTMLArray = tableSnipList.map((tableSnipItem) => {
-                const { prefix, title, body } = tableSnipItem;
-                const partBodyArr = body.slice(0, 10).map(escape);
-                const partBody = partBodyArr.join('<br />');
-
-                const pureTitle = title ? title.split('/')[0] : '';
-
-                return `<tr>
-                    <td>${prefix}</td>
-                    <td>${pureTitle}</td>
-                    <td>${partBody}</td>
-                </tr>`
+                
+                const userSnipIdHTML = userSnipIdArray.length ? userSnipIdArray.join('\n') : '';
+                return `
+                    <h2 style="margin-bottom: 16px;">${userId} <a class="operation-btn" onClick="deleteUserById('${userId}')">删除</a></h2>
+                    ${userSnipIdHTML}
+                `;
             });
 
-            if (snipListHTMLArray.length === 0) return '';
-            const snipListHTML = snipListHTMLArray.join('\n');
+            tableHTML = tableArray.length ? tableArray.join('\n') : '';
+        }
 
-            return `
-                <h2 style="margin-bottom: 16px;">${snippetsKeyList[index]}</h2>
-                <table border="1" cellspacing="0">
-                    <thead>
-                        <tr>
-                            <th align="left">关键字</th>
-                            <th align="left">标题</th>
-                            <th align="left">内容</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    ${snipListHTML}
-                    </tbody>
-                </table>
-            `;
-        });
-
-        const tableHTML = tableHTMLArray.length ? tableHTMLArray.join('\n') : '';
+        const operation = `
+            <a class="operation-btn" onclick="reload()">更新全部</a>
+            <!-- <a class="operation-btn" onclick="add()">添加Snippets</a> -->
+            <a class="operation-btn" onclick="addUser()">添加用户Snippets</a>
+        `;
 
         return `<!DOCTYPE html>
             <html lang="en">
@@ -164,10 +204,35 @@ export default class SnippetsHelper {
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>Cat Coding</title>
+                <style>
+                    .operation-btn {
+                        margin-right: 4px;
+                        cursor: pointer;
+                    }
+                </style>
             </head>
             <body>
+                ${operation}
                 ${tableHTML}
+                <script>
+                    const vscode = acquireVsCodeApi();
+                    function reload () {
+                        vscode.postMessage({ command: 'reload' })
+                    }
+
+                    function add () {
+                        vscode.postMessage({ command: 'add' })
+                    }
+
+                    function addUser () {
+                        vscode.postMessage({ command: 'addUser' })
+                    }
+
+                    function deleteUserById (userId) {
+                        vscode.postMessage({ command: 'deleteUserById', payload: userId })
+                    }
+                </script>
             </body>
-            </html>`
+            </html>`;
     }
 }

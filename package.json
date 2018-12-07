@@ -1,151 +1,135 @@
 {
-    "name": "snipx",
-    "displayName": "Snipx",
-    "description": "Best team snippets",
-    "version": "0.1.41",
-    "publisher": "snipx",
-    "engines": {
-        "vscode": "^1.23.0"
-    },
-    "icon": "images/icon.png",
-    "categories": [
-        "Other"
+  "name": "snipx",
+  "displayName": "Snipx",
+  "description": "Best team snippets",
+  "version": "0.1.42",
+  "publisher": "snipx",
+  "engines": {
+    "vscode": "^1.23.0"
+  },
+  "icon": "images/icon.png",
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./out/extension",
+  "contributes": {
+    "commands": [
+      {
+        "command": "extension.snipx.update",
+        "title": "更新snipx代码片段"
+      },
+      {
+        "command": "extension.snipx.update",
+        "title": "更新snipx代码片段"
+      },
+      {
+        "command": "extension.snipx.map",
+        "title": "snipx Snippets Map查看"
+      }
     ],
-    "activationEvents": [
-        "*"
-    ],
-    "main": "./out/extension",
-    "contributes": {
-        "commands": [
-            {
-                "command": "extension.snipx.update",
-                "title": "更新snipx代码片段"
-            },
-            {
-                "command": "extension.snipx.map",
-                "title": "snipx Snippets Map查看"
-            },
-            {
-                "command": "extension.snipx.config",
-                "title": "配置snipx源"
-            },
-            {
-                "command": "extension.snipx.seed",
-                "title": "snipx种子导入"
-            },
-            {
-                "command": "extension.snipx.egg",
-                "title": "egg路由导入"
-            }
-        ],
-        "viewsContainers": {
-			"activitybar": [
-				{
-					"id": "package-explorer",
-					"title": "Package Explorer",
-					"icon": "media/dep.svg"
-				}
-			]
-		},
-		"views": {
-			"package-explorer": [
-				{
-					"id": "nodeDependencies",
-					"name": "Node Dependencies"
-				}
-			]
-		},
-        "menus": {
-            "explorer/context": [{
-                "command": "extension.snipx.seed"
-            },
-            {
-                "command": "extension.snipx.egg"
-            }],
-            "editor/title": [{
-                "when": "resourceLangId == markdown",
-                "command": "markdown.showPreview",
-                "alt": "markdown.showPreviewToSide",
-                "group": "navigation"
-            }],
-            "view/title": [{
-                "command": "extension.snipx.map"
-            }],
-            "view/item/context": [{
-                "command": "extension.snipx.config"
-            }]
-        },
-        "snippets": [
-            {
-                "languages": [
-                    "javascript",
-                    "typescript",
-                    "javascriptreact",
-                    "scss",
-                    "css",
-                    "less"
-                ],
-                "path": "./snippets/_riddle.code-snippets"
-            },
-            {
-                "languages": [
-                    "javascript",
-                    "typescript",
-                    "javascriptreact",
-                    "scss",
-                    "css",
-                    "less"
-                ],
-                "path": "./snippets/_gitlab.code-snippets"
-            }
-        ],
-        "configuration": {
-            "title": "Snipx Config",
-            "properties": {
-                "snipx.settings.gitlabSource": {
-                    "type": "array",
-                    "default": [
-                        "http://gitlab.alibaba-inc.com/fd-arts/core-base"
-                    ],
-                    "description": "获取Gitlab Snippets的地址"
-                },
-                "snipx.settings.riddleTags": {
-                    "type": "array",
-                    "default": [
-                        "FdArts+代码库"
-                    ],
-                    "description": "Riddle 标签数组"
-                },
-                "snipx.settings.gitlabApiUrl": {
-                    "type": "string",
-                    "default": "",
-                    "description": "gitlab的api地址配置"
-                },
-                "snipx.settings.gitlabPrivateToken": {
-                    "type": "string",
-                    "default": "",
-                    "description": "gitlab的密钥"
-                }
-            }
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "package-explorer",
+          "title": "Package Explorer",
+          "icon": "media/dep.svg"
         }
+      ]
     },
-    "scripts": {
-        "vscode:prepublish": "npm run compile",
-        "compile": "tsc -p ./",
-        "watch": "tsc -watch -p ./",
-        "postinstall": "node ./node_modules/vscode/bin/install",
-        "test": "npm run compile && node ./node_modules/vscode/bin/test"
+    "views": {
+      "package-explorer": [
+        {
+          "id": "nodeDependencies",
+          "name": "Node Dependencies"
+        }
+      ]
     },
-    "devDependencies": {
-        "@types/mocha": "^2.2.42",
-        "@types/node": "^8.10.12",
-        "tslint": "^5.8.0",
-        "typescript": "^2.6.1",
-        "vscode": "^1.1.17"
+    "menus": {
+      "editor/title": [
+        {
+          "when": "resourceLangId == markdown",
+          "command": "markdown.showPreview",
+          "alt": "markdown.showPreviewToSide",
+          "group": "navigation"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "extension.snipx.map"
+        }
+      ]
     },
-    "dependencies": {
-        "@types/node-fetch": "^1.6.9",
-        "git-url-parse": "^9.0.0",
-        "node-fetch": "^2.1.2"
+    "snippets": [
+      {
+        "languages": [
+          "javascript",
+          "typescript",
+          "javascriptreact",
+          "scss",
+          "css",
+          "less"
+        ],
+        "path": "./snippets/_github.code-snippets"
+      },
+      {
+        "languages": [
+          "javascript",
+          "typescript",
+          "javascriptreact",
+          "scss",
+          "css",
+          "less"
+        ],
+        "path": "./snippets/_riddle.code-snippets"
+      },
+      {
+        "languages": [
+          "javascript",
+          "typescript",
+          "javascriptreact",
+          "scss",
+          "css",
+          "less"
+        ],
+        "path": "./snippets/_gitlab.code-snippets"
+      }
+    ],
+    "configuration": {
+      "title": "Snipx Config",
+      "properties": {
+        "snipx.settings.gistSubscription": {
+          "type": "array",
+          "default": [],
+          "description": "gist id列表"
+        },
+        "snipx.settings.gistUserList": {
+          "type": "array",
+          "default": [],
+          "description": "gist user列表"
+        }        
+      }
     }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "postinstall": "node ./node_modules/vscode/bin/install",
+    "test": "npm run compile && node ./node_modules/vscode/bin/test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^2.2.42",
+    "@types/node": "^8.10.12",
+    "tslint": "^5.8.0",
+    "typescript": "^2.6.1",
+    "vscode": "^1.1.17"
+  },
+  "dependencies": {
+    "@types/node-fetch": "^1.6.9",
+    "git-url-parse": "^9.0.0",
+    "node-fetch": "^2.1.2"
+  }
 }

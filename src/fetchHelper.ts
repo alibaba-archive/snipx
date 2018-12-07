@@ -1,49 +1,72 @@
-'use strict';
-
-import { window } from 'vscode';
-import { URLSearchParams } from 'url';
-import { ConfigHelper } from './configHelper';
-const gitUrlParse = require('git-url-parse');
-import fetch from 'node-fetch';
-import { SnipItem } from './static';
-
+'use strict';import fetch from 'node-fetch';
 const noop = () => {};
 
-interface RiddleCode {
-    jsx: string,
-    css: string,
-    compiledJsx: string
-}
-
-interface RiddleItem {
-    code?: RiddleCode,
-    title?: string
-}
-
-interface RiddleResult {
-    list?: Array<any>
-}
-
 interface QueryOptions {
-    onError: (e: any) => void,
-    json?: any
-}
-
-function entries (obj: any) {
-    return Object.keys(obj).map((key) => {
-        return [key, obj[key]]
-    });
+    onError: (e: any) => void;
+    json?: any;
 }
 
 export default class FetchHelper {
+    public async handleCommonRes (res) {
+        let gistOwner = '';
+        const gistResult = [].concat(res);
+        let gistList:Array<any> = [];
+        if (Array.isArray(gistResult)) {
+            const gistPromiseList = gistResult.map(async (gistItem) => {
+                const { files, id, description, owner } = gistItem;
+                let snippets: any = [];
+                if (!gistOwner && owner && owner.login) {
+                gistOwner = owner.login;
+                }
+                if (files && Object.keys(files).length > 0) {
+                    const snippetsPromise = Object.keys(files).map(async (filekey) => {
+                        const fileItem = files[filekey];
+                        const { raw_url, content } = fileItem;
+                        let fileContent: any = "";
+                        if (content) {
+                            fileContent = content;
+                        } else if (raw_url) {
+                            fileContent = await this.Request(raw_url, { onError: () => {}});
+                        }
+    
+                        return {
+                            ...fileItem,
+                            content: fileContent,
+                            description,
+                        };
+                    });
+    
+    
+                    snippets = await Promise.all(snippetsPromise).catch((e) => {
+                        console.log(e);
+                    });
+                }
+    
+                return {
+                    id,
+                    snippets,
+                    description,
+                };
+            });
+    
+            gistList = await Promise.all(gistPromiseList);
+        }
+    
+        return {
+            user: gistOwner,
+            gists: gistList,
+        };
+    }
     public Request (url: string, props: QueryOptions) {
         const { json = null, onError = noop } = props || {};
         let queryOpts = {};
-        if (json) queryOpts = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(json)
-        };
+        if (json) {
+            queryOpts = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(json)
+            };
+        }
 
         return new Promise(async (resolve, reject) => {
             const resp: any = await fetch(url, queryOpts).catch((e: any) => {
@@ -70,106 +93,52 @@ export default class FetchHelper {
         });
     }
 
-    private getGitlabId (url: string) {
-        if (url.startsWith('gitlab')) url += 'http://'
-        const parseGitModule = gitUrlParse(url)
-        const { name = '', owner ='' } = parseGitModule || {}
-        return `${owner}/${name}`
-    }
+    public async fetchGistSnippetsById (ids: Array<string>, props: QueryOptions) {
 
-    public async fetchRiddleSnippets (tags: string[], props: QueryOptions) {
-        const { onError: rootOnError } = props;
-        const riddleList = tags.map(async (tag: string) => {            
-            let url = `http://riddle.alibaba-inc.com/api/riddles?tag=${encodeURI(tag)}`;
-
-            return new Promise(async (resolveTag, reject) => {
-                const result: RiddleResult = await this.Request(url, { onError: (e) => {
-                    rootOnError && rootOnError(e);
-                }});
-
-                const { list = [] } = result || {};
-
-                if (Array.isArray(list)) {
-                    const promiseList = list.map(async (item: any) => {
-                        const { id } = item
-                        return new Promise(async (resolve) => {
-                            const riddleItem: RiddleItem = await this.Request(`http://riddle.alibaba-inc.com/api/riddles/${id}`, { onError: (e) => {
-                                rootOnError(e);
-                            }});
-
-                            const { code, title = '' } = riddleItem;
-                            const { jsx = '' } = code || {};
-                            
-                            const fullItem: SnipItem = {
-                                title,
-                                content: jsx
-                            };
-                    
-                            resolve(fullItem)
-                        })
-                    })
-                
-                    resolveTag(Promise.all(promiseList));
-                } else {
-                    rootOnError && rootOnError('拉取riddle代码片段失败，请检查是否在公司内网环境!');
-                    reject(Promise.resolve(null));
-                }
-            });
-        });
-
-        return Promise.all(riddleList);
-    }
-
-    private async gitlabRequest (api: string, body: any) {        
-        const PRIVATE_TOKEN = ConfigHelper.gitlabPrivateToken;
-        const API_URL = ConfigHelper.gitlabApiUrl;
-
-        if (!PRIVATE_TOKEN || !API_URL) {
-            window.showInformationMessage('请完成gitlabPrivateToken或gitlabApiUrl的配置');
-            return null;
+        if (Array.isArray(ids) && ids.length > 0) {
+             const promiseList = ids.filter(s => !!s).map(async (item: string) => {
+                 const result = await this.Request(`https://api.github.com/gists/${item}`, { onError: () => {}});
+                 if (result.id) {
+                    const gistResult = await this.handleCommonRes(result);
+                    return gistResult;
+                 } else {
+                     return null;
+                 }
+             });
+ 
+             const pResult = await Promise.all(promiseList);
+             return pResult.filter(item => !!item);
         } else {
-            let url = API_URL + api
-    
-            let queryObj = Object.assign({}, body)
-            const queryParams = new URLSearchParams(<Array<any>>entries(queryObj)).toString()
-            url += `?${queryParams}&private_token=${PRIVATE_TOKEN}`
-        
-            let result: any = await this.Request(url, { onError: () => {}});
-            return result
-        }        
-    }
-
-    public async fetchGitlabSnippets (rawUrl: string, props: QueryOptions) {
-        const { onError: rootOnError } = props;
-        let url = this.getGitlabId(rawUrl);
-        let id = encodeURIComponent(url)
-        let snippets: any = await this.gitlabRequest(`projects/${id}/snippets`, { onError: (e: any) => {
-            rootOnError(e);
-        }});
-
-        if (Array.isArray(snippets)) {
-            const promiseList = snippets.map(async (item: any) => {
-                const { id: itemId } = item
-                return new Promise(async (resolve, reject) => {
-                  const rawContent = await this.gitlabRequest(`projects/${id}/snippets/${itemId}/raw`, {
-                      onError: () => {
-                          reject();
-                      }
-                  })
-                  const fullItem = {
-                    ...item,
-                    content: rawContent
-                  }
-          
-                  resolve(fullItem)
-                })
-              })
-          
-            return Promise.all(promiseList);
-        } else if (snippets && snippets.message) {
-            window.showInformationMessage('拉取代码片段失败，请检查是否在公司内网环境!');
-            return Promise.resolve(null);
+            return [];
         }
+     }
+
+    public async fetchGistSnippetsByUser (userList: Array<string>, props: QueryOptions) {
+        if (Array.isArray(userList)) {
+             const promiseList = userList.filter(s => !!s).map(async (item: string) => {
+                 const result = await this.Request(`https://api.github.com/users/${item}/gists`, { onError: () => {}});
+                 const gistResult = await this.handleCommonRes(result);
+                return gistResult;
+             });
+ 
+             return Promise.all(promiseList);
+        } else {
+            return [];
+        }
+     }
+
+    public async fetchGistSnippets (subscriptions: Array<string>, props: QueryOptions) {
+       if (Array.isArray(subscriptions)) {
+            const promiseList = subscriptions.filter(s => !!s).map(async (item: string) => {
+                const result = await this.Request(`https://api.github.com/users/${item}/gists`, { onError: () => {}});
+                const gistResult = await this.handleCommonRes(result);
+                return gistResult;
+            });
+
+            return Promise.all(promiseList);
+       } else {
+           return [];
+       }
     }
 
     public async fetchSource () {
