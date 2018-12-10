@@ -8,23 +8,13 @@
     "vscode": "^1.23.0"
   },
   "icon": "images/icon.png",
-  "categories": [
-    "Other"
-  ],
+  "categories": [ "Snippets", "Other" ],
   "activationEvents": [
     "*"
   ],
   "main": "./out/extension",
   "contributes": {
     "commands": [
-      {
-        "command": "extension.snipx.update",
-        "title": "更新snipx代码片段"
-      },
-      {
-        "command": "extension.snipx.update",
-        "title": "更新snipx代码片段"
-      },
       {
         "command": "extension.snipx.map",
         "title": "snipx Snippets Map查看"
@@ -48,14 +38,6 @@
       ]
     },
     "menus": {
-      "editor/title": [
-        {
-          "when": "resourceLangId == markdown",
-          "command": "markdown.showPreview",
-          "alt": "markdown.showPreviewToSide",
-          "group": "navigation"
-        }
-      ],
       "view/title": [
         {
           "command": "extension.snipx.map"
@@ -68,33 +50,12 @@
           "javascript",
           "typescript",
           "javascriptreact",
+          "typescriptreact",
           "scss",
           "css",
           "less"
         ],
         "path": "./snippets/_github.code-snippets"
-      },
-      {
-        "languages": [
-          "javascript",
-          "typescript",
-          "javascriptreact",
-          "scss",
-          "css",
-          "less"
-        ],
-        "path": "./snippets/_riddle.code-snippets"
-      },
-      {
-        "languages": [
-          "javascript",
-          "typescript",
-          "javascriptreact",
-          "scss",
-          "css",
-          "less"
-        ],
-        "path": "./snippets/_gitlab.code-snippets"
       }
     ],
     "configuration": {

@@ -4,7 +4,6 @@ import * as path from 'path';
 import FetchHelper from './fetchHelper';
 import SnippetsHelper from './snippetHelper';
 import { window, commands, ProgressLocation } from 'vscode';
-import { GITHUB } from './static';
 
 interface TextOptions {
     title: string;
@@ -28,15 +27,15 @@ export class UpdateHelper {
                 title,
                 cancellable: true
             }, (progress, token) => {
-                token.onCancellationRequested(() => {
-                    console.log(cancel);
-                    outResolve();
-                });
-    
                 // 拉取代码片段后重新刷新视图
                 progress.report({ increment: 0, message: before });            
-                var p = new Promise(async (resolve) => {
+                var p = new Promise(async (resolve, reject) => {
                     await task;
+                    token.onCancellationRequested(() => {
+                        console.log(cancel);
+                        reject();
+                        outResolve();
+                    });
                     progress.report({ increment: 99, message: after });
                     setTimeout(async () => {
                         resolve();
@@ -102,7 +101,7 @@ export class UpdateHelper {
         });
         
         if (codeSource) {
-            const p = UpdateHelper.updateGistByUserId(codeSource);
+            const p = UpdateHelper.updateGistByUserId([codeSource]);
             const textOptions = {
                 title: '拉取代码片段',
                 cancel: '取消拉取代码片段',
@@ -157,26 +156,29 @@ export class UpdateHelper {
             after: '执行Reload成功, 重新加载...',
             cancel: '执行Reload失败'
         });
+        await commands.executeCommand('workbench.action.reloadWindow');
     }
 
-    public static async updateGistByUserId (userId: any) {        
+    public static async updateGistByUserId (userIds: Array<string>) {        
         // 1. 拉取用户下所有snippets
         let helper = new FetchHelper();
-        const snippets = await helper.fetchGistSnippetsByUser([userId], { onError: (e) => {
+        const snippets = await helper.fetchGistSnippetsByUser(userIds, { onError: (e) => {
             console.log('snippets fetch error', e);
         }});
 
         // 2. 增加用户信息
         const { appendGistUserList } = ConfigHelper;
-        appendGistUserList(userId);
+        await appendGistUserList(userIds);
 
         // 3. 生成新的map内容，更新到本地
         const snipMap = this.queryMap();
         const mapifySnippets = SnippetsHelper.generateFromGistSnippets(snippets);
-        snipMap[userId] = mapifySnippets[userId]; // 直接替换对应user
+        userIds.forEach(userId => {
+            snipMap[userId] = mapifySnippets[userId]; // 直接替换对应user
+        });
+        
         await this.syncUserAndIdsByMap(mapifySnippets);
         await this.updateGist(snipMap);    
-        
     }
 
     public static async syncUserAndIdsByMap (snipMap: any) {

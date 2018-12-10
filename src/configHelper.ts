@@ -13,9 +13,19 @@ export class ConfigHelper {
         await ConfigHelper.configuration.update('gistUserList', val, isGlobal);
     }
 
-    public static async appendGistUserList(val: string, isGlobal: boolean = true) {
+    public static async appendGistUserList(val: Array<string>, isGlobal: boolean = true) {
         const arr: Array<string> = ConfigHelper.getSettings<Array<string>>('gistUserList');
-        const userList = arr.indexOf(val) === -1 ? arr.concat(val) : arr;
+        const userList: Array<string> = [];
+        val.forEach((valItem) => {
+            if (userList.indexOf(valItem) === -1) {
+                userList.push(valItem);
+            }
+        });
+        arr.forEach((valItem) => {
+            if (userList.indexOf(valItem) === -1) {
+                userList.push(valItem);
+            }
+        });
         await ConfigHelper.configuration.update('gistUserList', userList, isGlobal);
     }
 

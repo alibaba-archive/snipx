@@ -8,7 +8,7 @@ interface VscodeSnippetItem {
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { window, ViewColumn, ExtensionContext } from 'vscode';
+import { MessageItem, window, ViewColumn, ExtensionContext } from 'vscode';
 import { GITHUB } from './static';
 import { UpdateHelper } from './updateHelper';
 
@@ -30,9 +30,9 @@ function escape(s: string) {
 export default class SnippetsHelper {
     public static generateFromGistSnippets(userGistList: Array<any>) {
         let comboSnippets: any = {};
-        const userCodeSnippets: any = {};
         userGistList.forEach((item) => {
             const { user, gists: gistList } = item;
+            const userCodeSnippets: any = {};
             if (Array.isArray(gistList)) {
                 gistList.forEach((gistItem) => {
                     const { id = '', snippets } = gistItem;                    
@@ -128,8 +128,15 @@ export default class SnippetsHelper {
                     panel.webview.html = SnippetsHelper.generateSnippetsMapHTML();
                     break;
                 case 'deleteUserById': 
-                    await UpdateHelper.deleteUserById(payload);
-                    panel.webview.html = SnippetsHelper.generateSnippetsMapHTML();
+                    const result = await window.showWarningMessage<MessageItem>('请确认是否删除该用户下所有代码片段？', { modal: true },
+                        { title: '确认', isCloseAffordance: false }
+                    );
+
+                    if (result) {
+                        await UpdateHelper.deleteUserById(payload);
+                        panel.webview.html = SnippetsHelper.generateSnippetsMapHTML();
+                    }
+                    
                     break;
             }
         }, undefined, context.subscriptions);
@@ -193,10 +200,12 @@ export default class SnippetsHelper {
         }
 
         const operation = `
-            <a class="operation-btn" onclick="reload()">更新全部</a>
+            <a class="operation-btn" onclick="reload()">重新拉取全部</a>
             <!-- <a class="operation-btn" onclick="add()">添加Snippets</a> -->
             <a class="operation-btn" onclick="addUser()">添加用户Snippets</a>
         `;
+
+        const tips = `<div class="tips">提示: 重新拉取的片段需要Reload Window才能激活哦。</div>`;
 
         return `<!DOCTYPE html>
             <html lang="en">
@@ -206,13 +215,20 @@ export default class SnippetsHelper {
                 <title>Cat Coding</title>
                 <style>
                     .operation-btn {
+                        margin-top: 12px;
                         margin-right: 4px;
                         cursor: pointer;
+                    }
+
+                    .tips {
+                        magrin-top: 12px;
+                        color: #666;
                     }
                 </style>
             </head>
             <body>
                 ${operation}
+                ${tips}
                 ${tableHTML}
                 <script>
                     const vscode = acquireVsCodeApi();
