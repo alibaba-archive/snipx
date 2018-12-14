@@ -74,6 +74,10 @@
       }
     }
   },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:alibaba/snipx.git"
+  },
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
