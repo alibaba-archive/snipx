@@ -17,7 +17,7 @@
     "commands": [
       {
         "command": "extension.snipx.map",
-        "title": "snipx Snippets Map查看"
+        "title": "Snipx Snippets Map查看"
       }
     ],
     "viewsContainers": {
