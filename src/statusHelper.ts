@@ -1,5 +1,4 @@
 import { workspace, window, StatusBarItem, StatusBarAlignment } from 'vscode';
-import { ConfigHelper } from './configHelper';
 import { MAP_COMMAND } from './static';
 
 const priority = 4.5;

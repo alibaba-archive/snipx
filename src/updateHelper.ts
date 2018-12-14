@@ -221,7 +221,7 @@ export class UpdateHelper {
             // 修改map的内容
             const snipMap = this.queryMap();        
             const mapifySnippets = SnippetsHelper.generateFromGistSnippets(snippets);
-            snippets.forEach((item) => {
+            snippets.forEach((item: any) => {
                 const { user, gists } = item;
                 gists.forEach((gItem: any) => {
                     const { id } = gItem;

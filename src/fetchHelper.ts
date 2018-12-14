@@ -7,13 +7,16 @@ interface QueryOptions {
 }
 
 export default class FetchHelper {
-    public async handleCommonRes (res) {
+    public async handleCommonRes (res: any) {
         let gistOwner = '';
         const gistResult = [].concat(res);
         let gistList:Array<any> = [];
         if (Array.isArray(gistResult)) {
-            const gistPromiseList = gistResult.map(async (gistItem) => {
-                const { files, id, description, owner } = gistItem;
+            const gistPromiseList = gistResult.map(async (gistItem: any) => {
+                const files = gistItem.files;
+                const id = gistItem.id;
+                const description = gistItem.description;
+                const owner = gistItem.owner;
                 let snippets: any = [];
                 if (!gistOwner && owner && owner.login) {
                 gistOwner = owner.login;
@@ -97,7 +100,7 @@ export default class FetchHelper {
 
         if (Array.isArray(ids) && ids.length > 0) {
              const promiseList = ids.filter(s => !!s).map(async (item: string) => {
-                 const result = await this.Request(`https://api.github.com/gists/${item}`, { onError: () => {}});
+                 const result: any = await this.Request(`https://api.github.com/gists/${item}`, { onError: () => {}});
                  if (result.id) {
                     const gistResult = await this.handleCommonRes(result);
                     return gistResult;
