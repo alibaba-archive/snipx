@@ -2,7 +2,7 @@
   "name": "snipx",
   "displayName": "Snipx",
   "description": "Best team snippets",
-  "version": "0.1.42",
+  "version": "1.0.0",
   "publisher": "snipx",
   "engines": {
     "vscode": "^1.23.0"
